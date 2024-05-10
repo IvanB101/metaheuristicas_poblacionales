@@ -170,7 +170,7 @@ def run(
 # genetic algorith parameters
 chromosome_length = 75
 population_size = 500
-maximum_generation = 5000
+maximum_generation = 500
 mutation_rate = 0.02
 # a common seed and starting population for better consistency
 s = 0
