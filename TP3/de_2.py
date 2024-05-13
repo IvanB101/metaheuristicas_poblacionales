@@ -1,3 +1,4 @@
+from typing import Any
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -31,6 +32,7 @@ def differential_evolution(
     Cr: float = 0.7,
     limits: tuple[float, float] = (-5.0, 5.0),
     iter: int = 100,
+    report_inter: int = 20,
     verbose: bool = True,
 ):
     """
@@ -49,13 +51,27 @@ def differential_evolution(
     )
     obj_all = [objective(ind) for ind in population]
     # find the best performing vector of initial population
-    best_vector = population[np.argmin(obj_all)]
-    best_obj = min(obj_all)
-    prev_obj = best_obj
-    generations = []
+    generations: list[list[Any]] = [[], [], []]
 
     for i in range(iter):
+        if i % report_inter == 0:
+            mean = np.mean(obj_all)
+            max = np.max(obj_all)
+            min = np.min(obj_all)
+            generations[0].append(min)
+            generations[1].append(mean)
+            generations[2].append(max)
+            # report progress at each iteration
+            if verbose:
+                print(
+                    "Iteration: %{} min: {}, mean: {}, max: {}".format(
+                        i, min, mean, max
+                    )
+                )
+
         for j in range(Np):
+            # reporting
+
             # choose three candidates, a, b and c, that are not the current one
             candidates = [candidate for candidate in range(Np) if candidate != j]
             a, b, c = population[np.random.choice(candidates, 3, replace=False)]
@@ -69,33 +85,26 @@ def differential_evolution(
                 population[j] = trial
                 obj_all[j] = obj_trial
 
-        best_obj = min(obj_all)
-        # store the lowest objective function value
-        if best_obj < prev_obj:
-            best_vector = population[np.argmin(obj_all)]
-            prev_obj = best_obj
-            generations.append(best_obj)
-            # report progress at each iteration
-            if verbose:
-                print(
-                    "Iteration: %d f([%s]) = %.5f"
-                    % (i, np.around(best_vector, decimals=5), best_obj)
-                )
+    best_vector = population[np.argmin(obj_all)]
+    best_obj = np.min(obj_all)
 
     return best_vector, best_obj, generations
 
 
 dimensions = [10, 50, 100]
-colors = ["#2187bb", "#149c1b", "#3916a1"]
+colors = ["#1187bb", "#148c1b", "#3814a1"]
 for dimension, color in zip(dimensions, colors):
-    best_vector, best_obj, generations = differential_evolution(
-        dimension, verbose=False
+    best_vector, best_obj, [mins, means, maxs] = differential_evolution(
+        dimension,
+        verbose=False,
     )
     print("\nSolution: f([%s]) = %.5f" % (np.around(best_vector, decimals=5), best_obj))
 
-    plt.plot(generations, color=color, label=("n: {}".format(dimension)))
+    plt.plot(mins, "--", color=color)
+    plt.plot(means, color=color, label=("n: {}".format(dimension)))
+    plt.plot(maxs, "--", color=color)
 
-plt.xlabel("Improvement Number")
+plt.xlabel("Sample point")
 plt.ylabel("Evaluation f(x)")
 plt.legend()
 plt.show()
